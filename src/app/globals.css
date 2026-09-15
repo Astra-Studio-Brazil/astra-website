@@ -1,0 +1,572 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-serif: var(--font-newsreader), Georgia, serif;
+  --font-mono: var(--font-dm-mono), ui-monospace, Menlo, monospace;
+}
+
+:root {
+  --bg: #050608;
+  --ink: #ece7dd;
+  --ink-2: rgb(236 231 221 / 0.62);
+  --ink-3: rgb(236 231 221 / 0.4);
+  --line: rgb(236 231 221 / 0.14);
+  --line-strong: rgb(236 231 221 / 0.3);
+  --starlight: #f3e6c9;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --gutter: clamp(18px, 3vw, 40px);
+  /* Scales the intro; returning visitors in the same session get a short one. */
+  --intro: 1;
+  color-scheme: dark;
+}
+
+:root[data-intro="short"] {
+  --intro: 0.3;
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+body {
+  background: radial-gradient(130% 100% at 50% 42%, #0c0e15 0%, #07080c 50%, #030304 100%)
+    var(--bg);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  touch-action: manipulation;
+}
+
+::selection {
+  background: rgb(243 230 201 / 0.22);
+}
+
+:focus-visible {
+  outline: 1px solid var(--starlight);
+  outline-offset: 4px;
+}
+
+/* ---- Layers: sky → vignette → grain → content ---------------------- */
+
+.sky {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Darkens the edges and quiets the stars behind the centre. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(34% 30% at 50% 50%, rgb(5 6 8 / 0.38), transparent),
+    radial-gradient(ellipse at center, transparent 45%, rgb(0 0 0 / 0.55) 100%);
+}
+
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.frame {
+  position: fixed;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  padding: var(--gutter);
+  padding-top: max(var(--gutter), env(safe-area-inset-top));
+  padding-bottom: max(var(--gutter), env(safe-area-inset-bottom));
+  /* The sky underneath takes the pointer everywhere but the controls. */
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.frame a,
+.frame button,
+.frame [data-hover] {
+  pointer-events: auto;
+}
+
+.frame--center {
+  grid-template-rows: 1fr;
+}
+
+/* ---- Corners -------------------------------------------------------- */
+
+.bar {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  animation: fade calc(1.6s * var(--intro)) ease calc(2.6s * var(--intro)) both;
+}
+
+.bar--top {
+  align-items: flex-start;
+}
+
+.bar--bottom {
+  align-items: flex-end;
+}
+
+.meta {
+  font-size: 10.5px;
+  line-height: 1.7;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.clock {
+  margin-left: 0.9em;
+  color: var(--ink);
+}
+
+.clock__offset {
+  margin-left: 0.9em;
+  color: var(--starlight);
+}
+
+/* Hover swaps a line for the one hidden beneath it. */
+.roll {
+  display: inline-grid;
+  overflow: hidden;
+  cursor: default;
+}
+
+.roll > * {
+  grid-area: 1 / 1;
+  transition:
+    transform 0.8s var(--ease),
+    opacity 0.8s var(--ease);
+}
+
+.roll > :last-child,
+.roll:hover > :first-child {
+  opacity: 0;
+  transform: translateY(-100%);
+}
+
+.roll > :last-child {
+  transform: translateY(100%);
+}
+
+.roll:hover > :last-child {
+  opacity: 1;
+  transform: none;
+}
+
+.lang {
+  display: flex;
+  margin: -8px -10px 0 0;
+}
+
+.lang button {
+  position: relative;
+  padding: 8px 10px;
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  color: var(--ink-3);
+  cursor: pointer;
+  transition: color 0.5s var(--ease);
+}
+
+.lang button:hover {
+  color: var(--ink);
+}
+
+.lang button::after {
+  content: "";
+  position: absolute;
+  left: calc(50% - 0.08em);
+  bottom: 1px;
+  width: 3px;
+  height: 3px;
+  margin-left: -1.5px;
+  border-radius: 50%;
+  background: var(--starlight);
+  opacity: 0;
+  transform: scale(0);
+  transition:
+    opacity 0.6s var(--ease),
+    transform 0.6s var(--ease);
+}
+
+:root:not([data-lang="pt"]) .lang [data-l="en"],
+:root[data-lang="pt"] .lang [data-l="pt"] {
+  color: var(--ink);
+}
+
+:root:not([data-lang="pt"]) .lang [data-l="en"]::after,
+:root[data-lang="pt"] .lang [data-l="pt"]::after {
+  opacity: 1;
+  transform: none;
+}
+
+/* ---- Centre --------------------------------------------------------- */
+
+.stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  text-align: center;
+  transition:
+    opacity 1.2s var(--ease),
+    filter 1.2s var(--ease);
+}
+
+/* Time-lapse: step back so the trails can be seen. */
+.is-holding .stage {
+  opacity: 0.25;
+  filter: blur(2px);
+}
+
+.logo {
+  display: block;
+  width: clamp(240px, min(36vw, 52vh), 480px);
+  height: auto;
+  overflow: visible;
+  color: var(--ink);
+}
+
+/* The star lights up first, then the name is drawn out of it. */
+.logo__star,
+.logo__glow,
+.logo__reveal {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.logo__star {
+  animation:
+    star-in calc(2.2s * var(--intro)) var(--ease) calc(0.3s * var(--intro)) both,
+    twinkle 7s ease-in-out calc(3s * var(--intro)) infinite;
+  transition: rotate 1.4s var(--ease);
+}
+
+.logo:hover .logo__star {
+  rotate: 90deg;
+}
+
+.logo__glow {
+  opacity: 0.5;
+  animation:
+    fade calc(2.4s * var(--intro)) ease calc(0.6s * var(--intro)) both,
+    glow 7s ease-in-out calc(3s * var(--intro)) infinite;
+}
+
+.logo__reveal {
+  transform-origin: left center;
+  animation: reveal calc(2s * var(--intro)) var(--ease) calc(1s * var(--intro)) both;
+}
+
+.tagline {
+  margin-top: clamp(22px, 4.4vh, 46px);
+  font-family: var(--font-serif);
+  font-weight: 300;
+  font-size: clamp(20px, min(2.4vw, 3.6vh), 32px);
+  line-height: 1.3;
+  letter-spacing: 0.01em;
+  max-width: 23em;
+  text-wrap: balance;
+  animation: rise calc(1.8s * var(--intro)) var(--ease) calc(1.5s * var(--intro)) both;
+}
+
+.tagline em {
+  font-style: italic;
+}
+
+.contact {
+  position: relative;
+  display: inline-flex;
+  margin-top: clamp(26px, 5vh, 54px);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgb(8 9 12 / 0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition:
+    border-color 0.6s var(--ease),
+    box-shadow 0.8s var(--ease);
+  animation: rise calc(1.8s * var(--intro)) var(--ease) calc(1.9s * var(--intro)) both;
+}
+
+.contact:hover {
+  border-color: var(--line-strong);
+  box-shadow: 0 0 48px -14px rgb(243 230 201 / 0.28);
+}
+
+.contact__button {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 46px;
+  padding: 0 22px 0 28px;
+  overflow: hidden;
+  border-radius: 999px;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.contact__roll {
+  display: grid;
+}
+
+.contact__roll > * {
+  grid-area: 1 / 1;
+  transition:
+    transform 0.8s var(--ease),
+    opacity 0.8s var(--ease);
+}
+
+.contact__email {
+  text-transform: none;
+  letter-spacing: 0.06em;
+  opacity: 0;
+  transform: translateY(130%);
+}
+
+.contact__button:is(:hover, :focus-visible) .contact__label {
+  opacity: 0;
+  transform: translateY(-130%);
+}
+
+.contact__button:is(:hover, :focus-visible) .contact__email {
+  opacity: 1;
+  transform: none;
+}
+
+.contact__icon {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  overflow: visible;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  color: var(--ink-2);
+  transition: color 0.4s var(--ease);
+}
+
+.contact__button:hover .contact__icon {
+  color: var(--ink);
+}
+
+.contact__icon path {
+  transition:
+    opacity 0.4s var(--ease),
+    stroke-dashoffset 0.7s var(--ease);
+}
+
+.contact__icon-check {
+  stroke: var(--starlight);
+  stroke-dasharray: 16;
+  stroke-dashoffset: 16;
+  opacity: 0;
+}
+
+.contact[data-copied] .contact__icon-copy {
+  opacity: 0;
+}
+
+.contact[data-copied] .contact__icon-check {
+  stroke-dashoffset: 0;
+  opacity: 1;
+}
+
+.contact__status {
+  position: absolute;
+  inset: calc(100% + 14px) 0 auto;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--starlight);
+}
+
+.contact__status:not(:empty) {
+  animation: rise 0.7s var(--ease) both;
+}
+
+.back {
+  margin-top: clamp(26px, 5vh, 54px);
+  padding-bottom: 6px;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  background: linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat;
+  transition:
+    color 0.5s var(--ease),
+    background-size 0.8s var(--ease);
+  animation: rise calc(1.8s * var(--intro)) var(--ease) calc(1.9s * var(--intro)) both;
+}
+
+.back:hover {
+  color: var(--ink);
+  background-size: 100% 1px;
+}
+
+/* ---- Star names ----------------------------------------------------- */
+
+.star-label {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+  pointer-events: none;
+  translate: 0 -50%;
+  opacity: 0;
+  transition: opacity 0.6s var(--ease);
+}
+
+.star-label.is-visible {
+  opacity: 1;
+}
+
+.star-label::before {
+  content: "";
+  width: 22px;
+  height: 1px;
+  margin-left: 12px;
+  background: linear-gradient(90deg, transparent, var(--ink-3));
+}
+
+.star-label.is-flipped {
+  flex-direction: row-reverse;
+  translate: -100% -50%;
+}
+
+.star-label.is-flipped::before {
+  margin: 0 12px 0 0;
+  background: linear-gradient(270deg, transparent, var(--ink-3));
+}
+
+.star-label__name {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  font-weight: 300;
+  font-style: italic;
+  color: var(--ink);
+}
+
+.star-label__constellation {
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+/* ---- Both languages live in the DOM; <html data-lang> picks one ------ */
+
+.t {
+  display: inline-grid;
+}
+
+.t > * {
+  grid-area: 1 / 1;
+  align-self: center;
+  transition:
+    opacity 0.7s var(--ease),
+    filter 0.7s var(--ease),
+    visibility 0s;
+}
+
+:root:not([data-lang="pt"]) .t > [data-l="pt"],
+:root[data-lang="pt"] .t > [data-l="en"] {
+  visibility: hidden;
+  opacity: 0;
+  filter: blur(6px);
+  transition:
+    opacity 0.3s ease,
+    filter 0.3s ease,
+    visibility 0s 0.3s;
+}
+
+/* ---- Motion --------------------------------------------------------- */
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+    filter: blur(8px);
+  }
+}
+
+@keyframes star-in {
+  from {
+    opacity: 0;
+    transform: scale(0.1) rotate(-135deg);
+  }
+}
+
+@keyframes twinkle {
+  50% {
+    transform: scale(0.88);
+  }
+}
+
+@keyframes glow {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+@keyframes reveal {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@media (max-width: 640px) {
+  .meta {
+    font-size: 9.5px;
+    letter-spacing: 0.12em;
+  }
+}
+
+@media (max-height: 480px) {
+  .contact__button {
+    height: 40px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-delay: 0s !important;
+    animation-duration: 1ms !important;
+    transition-duration: 1ms !important;
+  }
+}
