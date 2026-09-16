@@ -1,7 +1,7 @@
 import { Clock } from "@/components/clock";
 import { Contact } from "@/components/contact";
 import { LanguageToggle } from "@/components/language-toggle";
-import { Logo } from "@/components/logo";
+import { Logo, StarMark } from "@/components/logo";
 import { Sky } from "@/components/sky/sky";
 import { T } from "@/components/t";
 import { SITE } from "@/lib/site";
@@ -44,14 +44,13 @@ export default function Home() {
         </main>
 
         <footer className="bar bar--bottom">
-          <p className="meta roll" data-hover>
-            <span>
-              São Paulo
-              <Clock />
-            </span>
-            <span>
-              <T pt="Segure para avançar no tempo" en="Hold to fast-forward time" />
-            </span>
+          <p className="meta">
+            São Paulo
+            <Clock />
+          </p>
+          <p className="hint">
+            <StarMark className="hint__star" />
+            <T en="Press and hold the sky" pt="Segure o céu" />
           </p>
           <p className="meta">
             © {new Date().getFullYear()} {SITE.name}

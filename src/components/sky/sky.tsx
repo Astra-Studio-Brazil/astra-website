@@ -167,10 +167,13 @@ export function Sky() {
       onPointerMove(event);
       window.clearTimeout(touchTimer);
       const target = event.target as Element;
-      if (reducedMotion || event.button !== 0 || target.closest("a, button, [data-hover]")) return;
+      // Anywhere but the controls: the logo and the corner labels take the hold too.
+      if (reducedMotion || event.button !== 0 || target.closest("a, button")) return;
       holdTimer = window.setTimeout(() => {
         holding = true;
         root.classList.add("is-holding");
+        // The hint has been understood; it can go.
+        root.dataset.traveled = "1";
       }, HOLD_DELAY_MS);
     };
 
@@ -191,8 +194,9 @@ export function Sky() {
       if (reducedMotion) updateLabel();
     };
 
+    // A long press on the sky should travel in time, not open the browser menu.
     const onContextMenu = (event: Event) => {
-      if (holding) event.preventDefault();
+      if (holding || event.target === canvas) event.preventDefault();
     };
 
     const onVisibilityChange = () => {
@@ -242,6 +246,7 @@ export function Sky() {
       root.removeEventListener("pointerleave", onPointerLeave);
       document.removeEventListener("visibilitychange", onVisibilityChange);
       root.classList.remove("is-holding");
+      delete root.dataset.traveled;
       skyTime.offset = 0;
     };
   }, []);

@@ -32,3 +32,12 @@ export function Logo() {
     </svg>
   );
 }
+
+/** The star on its own, for small marks beside text. */
+export function StarMark({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="21.1 22.1 495.6 495.6" aria-hidden="true">
+      <path fill="currentColor" d={STAR} />
+    </svg>
+  );
+}
